@@ -18,4 +18,12 @@ public class AirportDAO {
         PreparedStatement pStmt = database.prepareStatement(stmt);
         return pStmt.executeQuery();
     }
+
+    public ResultSet getAirportsFrom(String city, String state) throws SQLException {
+        String stmt = "SELECT iata, name FROM airportData WHERE city = ? AND state = ? ORDER BY 1;";
+        PreparedStatement pStmt = database.prepareStatement(stmt);
+        pStmt.setString(1, city);
+        pStmt.setString(2, state);
+        return pStmt.executeQuery();
+    }
 }
