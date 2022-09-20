@@ -4,6 +4,8 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 
+//****Java class that defines the function responsible for connecting and integrating the software with MySQL****
+
 public class Connect {
     private String server, db, user, password;
     private int port;
