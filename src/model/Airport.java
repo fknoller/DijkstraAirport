@@ -14,6 +14,14 @@ public class Airport {
         this.longitude = longitude;
     }
 
+    public String getState() {
+        return this.state;
+    }
+
+    public String getCity() {
+        return this.city;
+    }
+
     //function to convert degrees to radians
     public double degToRad(double deg) {
         return deg*Math.PI/180;
