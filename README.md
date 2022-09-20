@@ -351,7 +351,7 @@ public void dijkstra(Airport src, Airport dest) {
 
 Para realizar o algoritmo, optamos pela abordagem através de uma ***priority queue*** formada pelos pares, ou seja, **PriorityQueue<Pair>**. O ***HashMap*** **HashMap<Airport, Double> distance** também faz parte do algoritmo, e é utilizado para guardar o tamanho do menor caminho do aeroporto ***src*** (parâmetro da função) a cada um dos outros.
 
-O **HashMap<Airport, Airport> parent** foi um acréscimo ao algoritmo para conseguirmos recuperar o aeroporto onde é feita a conexão antes de chegar ao destino. 	Para um grafo **completo** (com todas as possibilidades de arestas), é possível mostrar matematicamente, através da desigualdade triangular, que o menor caminho com no mínimo uma conexão entre dois aeroportos possui, na verdade, **exatamente uma** conexão. Assim, para um grafo completo, o HashMap definido faz sentido.
+O **HashMap<Airport, Airport> parent** foi um acréscimo ao algoritmo para conseguirmos recuperar o aeroporto onde é feita a conexão antes de chegar ao destino. 
 
 O algoritmo funciona da seguinte forma:
 
@@ -390,3 +390,244 @@ O algoritmo funciona da seguinte forma:
     ```
     
 5. Por fim, como queremos saber para um destino específico (é parâmetro), o algoritmo imprime qual o menor custo partindo do aeroporto inicial fornecido e onde a conexão deve ser feita.
+
+Código completo do arquivo ***WeightedGraph.java***:
+
+```java
+package model;
+
+import java.util.*;
+
+public class WeightedGraph {
+    private HashMap<Airport, LinkedList<Pair>> adj = new HashMap<>();
+
+    static class Pair implements Comparable<Pair>{
+        Airport airport;
+        double weight;
+
+        public Pair(Airport airport, double weight) {
+            this.airport = airport;
+            this.weight = weight;
+        }
+
+        @Override
+        public int compareTo(Pair p) {
+            if(this.weight < p.weight)
+                return -1;
+            else if(this.weight > p.weight)
+                return 1;
+            return 0;
+        }
+    }
+
+    public void addAirport(Airport dest) {
+        adj.put(dest, new LinkedList<>());
+    }
+
+    public void addPath(Airport a, Airport b, double weight) {
+        if(!adj.containsKey(a))
+            addAirport(a);
+        if(!adj.containsKey(b))
+            addAirport(b);
+        adj.get(a).add(new Pair(b, weight));
+        adj.get(b).add(new Pair(a, weight));
+    }
+
+    public Set<Airport> getAirports() {
+        return adj.keySet();
+    }
+
+    public void dijkstra(Airport src, Airport dest) {
+        PriorityQueue<Pair> pq = new PriorityQueue<>();
+        HashMap<Airport, Double> distance = new HashMap<>();
+        HashMap<Airport, Airport> parent = new HashMap<>();
+
+        for(Airport airport : adj.keySet())
+            distance.put(airport, Double.POSITIVE_INFINITY);
+
+        pq.add(new Pair(src, 0));
+        distance.put(src, 0.0);
+
+        while(!pq.isEmpty()) {
+            Airport currentAirport = pq.peek().airport;
+            pq.remove();
+
+            for(Pair pair : adj.get(currentAirport)) {
+                double weight = pair.weight;
+                Airport child = pair.airport;
+
+                if(child.getIata().equals(dest.getIata()) && currentAirport.getIata().equals(src.getIata()))
+                    continue;
+
+                if(distance.get(child) > distance.get(currentAirport) + weight) {
+                    distance.put(child, distance.get(currentAirport) + weight);
+                    pq.add(new Pair(child, distance.get(child)));
+                    parent.put(child, currentAirport);
+                }
+            }
+        }
+        System.out.println("Shortest path length: " + distance.get(dest) +
+                " with a connecting flight in " + parent.get(dest).getIata());
+    }
+}
+```
+
+## Caminho src/view/
+
+Nesse caminho, há apenas o ***main.java***, onde a função ***public static void main(String[] args)*** será executada.
+
+Extrai-se, no início, os aeroportos e seus atributos do banco de dados *MySQL*:
+
+```java
+AirportDAO DAO = new AirportDAO();
+	  ResultSet table = DAO.getAllAirports();
+	  WeightedGraph graph = new WeightedGraph();
+	  while(table.next()) {
+	      Airport airport = new Airport(table.getString("iata"), table.getString("name"),
+	              table.getString("city"), table.getString("state"),
+	              table.getDouble("latitude"), table.getDouble("longitude"));
+	      graph.addAirport(airport);
+	  }
+```
+
+Logo em seguida, cria-se um grafo completo com os aeroportos, ou seja, existe um caminho direto entre quaisquer dois aeroportos:
+
+```java
+for(Airport src : graph.getAirports()) {
+	  for(Airport dest : graph.getAirports()) {
+	      if(src.distance(dest) != 0)
+	          graph.addPath(src,dest, src.distance(dest));
+	  }
+}
+```
+
+A partir daí, temos uma interação com o usuário por meio de menus e, no fim, executamos o algoritmo de Dijkstra:
+
+```java
+Scanner sc = new Scanner(System.in);
+    System.out.println("Do you want to do an airport search? (Y/N)");
+    String city, state, iata1, iata2;
+    while(sc.nextLine().equalsIgnoreCase("Y")) {
+        //prints states list
+        HashMap<String, Integer> hash = new HashMap<>();
+        for(Airport airport : graph.getAirports()) {
+            if(!hash.containsKey(airport.getState())) {
+                System.out.println(airport.getState());
+                hash.put(airport.getState(), 1);
+            }
+        }
+        System.out.print("Please select the state from the list above: ");
+        state = sc.nextLine();
+        //prints cities list
+        for(Airport airport : graph.getAirports()) {
+            if(airport.getState().equalsIgnoreCase(state) && !hash.containsKey(airport.getCity())) {
+                System.out.println(airport.getCity());
+                hash.put(airport.getCity(), 1);
+            }
+        }
+        System.out.print("Now, please select the city from the list above: ");
+        city = sc.nextLine();
+        //prints airport list
+        for(Airport airport : graph.getAirports()) {
+            if(airport.getCity().equalsIgnoreCase(city) && airport.getState().equalsIgnoreCase(state))
+                System.out.println(airport.getIata() + " - " + airport.getName());
+        }
+        System.out.println();
+        System.out.println("Would you like to do another search? (Y/N)");
+    }
+
+    System.out.println();
+    System.out.print("Please enter the IATA code (3 letters) of the source airport: ");
+    iata1 = sc.nextLine();
+    System.out.print("Please enter the IATA code (3 letters) of the destination airport: ");
+    iata2 = sc.nextLine();
+    for(Airport airport1 : graph.getAirports())
+        if(airport1.getIata().equalsIgnoreCase(iata1)) {
+            for(Airport airport2 : graph.getAirports()) {
+                if(airport2.getIata().equalsIgnoreCase(iata2))
+                    graph.dijkstra(airport1,airport2);
+            }
+    }
+```
+
+Código completo do arquivo ***main.java***:
+
+```java
+package view;
+
+import model.Airport;
+import model.AirportDAO;
+import model.WeightedGraph;
+
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.HashMap;
+import java.util.Scanner;
+
+public class main {
+    public static void main(String[] args) throws SQLException {
+        //**import data from SQL and create graph in memory**
+        AirportDAO DAO = new AirportDAO();
+        ResultSet table = DAO.getAllAirports();
+        WeightedGraph graph = new WeightedGraph();
+        while(table.next()) {
+            Airport airport = new Airport(table.getString("iata"), table.getString("name"),
+                    table.getString("city"), table.getString("state"),
+                    table.getDouble("latitude"), table.getDouble("longitude"));
+            graph.addAirport(airport);
+        }
+        for(Airport src : graph.getAirports()) {
+            for(Airport dest : graph.getAirports()) {
+                if(src.distance(dest) != 0)
+                    graph.addPath(src,dest, src.distance(dest));
+            }
+        }
+        //**import data from SQL and create graph in memory**
+
+        Scanner sc = new Scanner(System.in);
+        System.out.println("Do you want to do an airport search? (Y/N)");
+        String city, state, iata1, iata2;
+        while(sc.nextLine().equalsIgnoreCase("Y")) {
+            //prints states list
+            HashMap<String, Integer> hash = new HashMap<>();
+            for(Airport airport : graph.getAirports()) {
+                if(!hash.containsKey(airport.getState())) {
+                    System.out.println(airport.getState());
+                    hash.put(airport.getState(), 1);
+                }
+            }
+            System.out.print("Please select the state from the list above: ");
+            state = sc.nextLine();
+            //prints cities list
+            for(Airport airport : graph.getAirports()) {
+                if(airport.getState().equalsIgnoreCase(state) && !hash.containsKey(airport.getCity())) {
+                    System.out.println(airport.getCity());
+                    hash.put(airport.getCity(), 1);
+                }
+            }
+            System.out.print("Now, please select the city from the list above: ");
+            city = sc.nextLine();
+            //prints airport list
+            for(Airport airport : graph.getAirports()) {
+                if(airport.getCity().equalsIgnoreCase(city) && airport.getState().equalsIgnoreCase(state))
+                    System.out.println(airport.getIata() + " - " + airport.getName());
+            }
+            System.out.println();
+            System.out.println("Would you like to do another search? (Y/N)");
+        }
+
+        System.out.println();
+        System.out.print("Please enter the IATA code (3 letters) of the source airport: ");
+        iata1 = sc.nextLine();
+        System.out.print("Please enter the IATA code (3 letters) of the destination airport: ");
+        iata2 = sc.nextLine();
+        for(Airport airport1 : graph.getAirports())
+            if(airport1.getIata().equalsIgnoreCase(iata1)) {
+                for(Airport airport2 : graph.getAirports()) {
+                    if(airport2.getIata().equalsIgnoreCase(iata2))
+                        graph.dijkstra(airport1,airport2);
+                }
+            }
+    }
+}
+```
