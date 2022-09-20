@@ -22,6 +22,14 @@ public class Airport {
         return this.city;
     }
 
+    public String getIata() {
+        return this.iata;
+    }
+
+    public String getName() {
+        return this.name;
+    }
+
     //function to convert degrees to radians
     public double degToRad(double deg) {
         return deg*Math.PI/180;
