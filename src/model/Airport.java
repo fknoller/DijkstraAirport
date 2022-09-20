@@ -30,6 +30,14 @@ public class Airport {
         return this.name;
     }
 
+    public double getLatitude() {
+        return this.latitude;
+    }
+
+    public double getLongitude() {
+        return this.longitude;
+    }
+
     //function to convert degrees to radians
     public double degToRad(double deg) {
         return deg*Math.PI/180;
