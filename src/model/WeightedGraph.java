@@ -5,7 +5,7 @@ import java.util.*;
 public class WeightedGraph {
     private HashMap<Airport, LinkedList<Pair>> adj = new HashMap<>();
 
-    static class Pair {
+    static class Pair implements Comparable<Pair>{
         Airport airport;
         double weight;
 
@@ -14,7 +14,8 @@ public class WeightedGraph {
             this.weight = weight;
         }
 
-        public int compare(Pair p) {
+        @Override
+        public int compareTo(Pair p) {
             if(this.weight < p.weight)
                 return -1;
             else if(this.weight > p.weight)
@@ -40,46 +41,36 @@ public class WeightedGraph {
         return adj.keySet();
     }
 
-    static class Path {
-        double dist;
-        HashMap<Airport, Airport> path;
-
-        public Path(double dist, HashMap<Airport, Airport> path) {
-            this.dist = dist;
-            this.path = path;
-        }
-    }
-
-    public Path dijkstra(Airport src, Airport dest) {
-        HashMap<Airport, Airport> path = new HashMap<>();
+    public void dijkstra(Airport src, Airport dest) {
         PriorityQueue<Pair> pq = new PriorityQueue<>();
-        HashMap<Airport, Double> dist = new HashMap<>();
+        HashMap<Airport, Double> distance = new HashMap<>();
+        HashMap<Airport, Airport> parent = new HashMap<>();
 
         for(Airport airport : adj.keySet())
-            dist.put(airport, Double.POSITIVE_INFINITY);
+            distance.put(airport, Double.POSITIVE_INFINITY);
 
         pq.add(new Pair(src, 0));
-        dist.put(src, 0.0);
+        distance.put(src, 0.0);
 
         while(!pq.isEmpty()) {
-            double u = pq.peek().weight;
-            Airport r = pq.peek().airport;
+            Airport currentAirport = pq.peek().airport;
             pq.remove();
 
-            if(dist.get(r) < u)
-                continue;
-            for(Pair pair : adj.get(r)) {
+            for(Pair pair : adj.get(currentAirport)) {
                 double weight = pair.weight;
                 Airport child = pair.airport;
 
-                if(dist.get(child) > dist.get(r) + weight) {
-                    dist.put(child, dist.get(r) + weight);
-                    path.put(child, r);
-                    pq.add(new Pair(child, dist.get(child)));
+                if(child.getIata().equals(dest.getIata()) && currentAirport.getIata().equals(src.getIata()))
+                    continue;
+
+                if(distance.get(child) > distance.get(currentAirport) + weight) {
+                    distance.put(child, distance.get(currentAirport) + weight);
+                    pq.add(new Pair(child, distance.get(child)));
+                    parent.put(child, currentAirport);
                 }
             }
         }
-
-        return new Path(dist.get(dest), path);
+        System.out.println("Shortest path length: " + distance.get(dest) +
+                " with a connecting flight in " + parent.get(dest).getIata());
     }
 }
