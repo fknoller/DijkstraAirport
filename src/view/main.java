@@ -64,20 +64,14 @@ public class main {
         System.out.println();
         System.out.print("Please enter the IATA code (3 letters) of the source airport: ");
         iata1 = sc.nextLine();
-        for(Airport airport : graph.getAirports())
-            if(air1.getIata().equalsIgnoreCase(iata1)) {
-                Airport air1(airport.getIata(),airport.getName(),airport.getCity(),airport.getState(),airport.getLat(),airport.getLong());
-                break;
-            }
-
-
         System.out.print("Please enter the IATA code (3 letters) of the destination airport: ");
         iata2 = sc.nextLine();
-        for(Airport airport : graph.getAirports())
-            if(air2.getIata().equalsIgnoreCase(iata1)) {
-                Airport air2(airport.getIata(),airport.getName(),airport.getCity(),airport.getState(),airport.getLat(),airport.getLong());
-                break;
+        for(Airport airport1 : graph.getAirports())
+            if(airport1.getIata().equalsIgnoreCase(iata1)) {
+                for(Airport airport2 : graph.getAirports()) {
+                    if(airport2.getIata().equalsIgnoreCase(iata2))
+                        graph.dijkstra(airport1,airport2);
+                }
             }
-
     }
 }
