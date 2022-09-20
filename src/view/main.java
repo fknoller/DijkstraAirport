@@ -31,7 +31,7 @@ public class main {
 
         Scanner sc = new Scanner(System.in);
         System.out.println("Do you want to do an airport search? (Y/N)");
-        String city, state;
+        String city, state, iata1, iata2;
         while(sc.nextLine().equalsIgnoreCase("Y")) {
             //prints states list
             HashMap<String, Integer> hash = new HashMap<>();
@@ -53,6 +53,19 @@ public class main {
             System.out.print("Now, please select the city from the list above: ");
             city = sc.nextLine();
             //prints airport list
+            for(Airport airport : graph.getAirports()) {
+                if(airport.getCity().equalsIgnoreCase(city) && airport.getState().equalsIgnoreCase(state))
+                    System.out.println(airport.getIata() + " - " + airport.getName());
+            }
+            System.out.println();
+            System.out.println("Would you like to do another search? (Y/N)");
         }
+
+        System.out.println();
+        System.out.print("Please enter the IATA code (3 letters) of the source airport: ");
+        iata1 = sc.nextLine();
+        System.out.print("Please enter the IATA code (3 letters) of the destination airport: ");
+        iata2 = sc.nextLine();
+
     }
 }
